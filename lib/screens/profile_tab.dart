@@ -1,0 +1,314 @@
+import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+import '../theme/app_theme.dart';
+import 'login_screen.dart';
+import 'categories_screen.dart';
+
+class ProfileTab extends StatefulWidget {
+  const ProfileTab({super.key});
+
+  @override
+  State<ProfileTab> createState() => ProfileTabState();
+}
+
+class ProfileTabState extends State<ProfileTab> {
+  String _nombre = '';
+  String _email = '';
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPerfil();
+  }
+
+  void recargar() => _cargarPerfil();
+
+  Future<void> _cargarPerfil() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final supabase = SupabaseService.instance;
+      final user = supabase.currentUser;
+      if (user == null) return;
+
+      final idAuthUser = user.id;
+
+      final result = await supabase.client
+          .from('usuario')
+          .select('nombre')
+          .eq('id_auth_user', idAuthUser)
+          .maybeSingle();
+
+      if (!mounted) return;
+      if (result == null) {
+        setState(() {
+          _error = 'Usuario no encontrado en la base de datos.';
+          _loading = false;
+        });
+        return;
+      }
+
+      setState(() {
+        _nombre = result['nombre'] as String? ?? 'Usuario';
+        _email = user.email ?? '';
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Error: ${e.toString()}';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _cerrarSesion() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await SupabaseService.instance.signOut();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text('Perfil'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: AppTheme.error),
+              const SizedBox(height: 16),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _cargarPerfil,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      child: Column(
+        children: [
+          const SizedBox(height: 24),
+          Stack(
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryFixed,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    _nombre.isNotEmpty ? _nombre[0].toUpperCase() : '?',
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      color: AppTheme.primary,
+                      fontSize: 40,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondaryContainer,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppTheme.surfaceContainerLowest,
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.edit,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _nombre,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _email,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppTheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                _buildMenuItem(
+                  icon: Icons.person_outlined,
+                  title: 'Editar perfil',
+                  onTap: () {},
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                _buildMenuItem(
+                  icon: Icons.category_outlined,
+                  title: 'Lista de categorías',
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CategoriesScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                _buildMenuItem(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notificaciones',
+                  onTap: () {},
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                _buildMenuItem(
+                  icon: Icons.lock_outlined,
+                  title: 'Privacidad',
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _cerrarSesion,
+              icon: const Icon(Icons.logout),
+              label: const Text('Cerrar sesión'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.error,
+                side: const BorderSide(color: AppTheme.error),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.secondaryFixed,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 20, color: AppTheme.secondary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: AppTheme.outlineVariant,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
