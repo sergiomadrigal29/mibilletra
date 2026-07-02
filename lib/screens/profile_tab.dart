@@ -3,6 +3,8 @@ import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'categories_screen.dart';
+import 'edit_profile_screen.dart';
+import 'notifications_screen.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -226,7 +228,19 @@ class ProfileTabState extends State<ProfileTab> {
                 _buildMenuItem(
                   icon: Icons.person_outlined,
                   title: 'Editar perfil',
-                  onTap: () {},
+                  onTap: () async {
+                    final result = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditProfileScreen(
+                          currentName: _nombre,
+                        ),
+                      ),
+                    );
+                    if (result == true) {
+                      await _cargarPerfil();
+                    }
+                  },
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 _buildMenuItem(
@@ -245,13 +259,14 @@ class ProfileTabState extends State<ProfileTab> {
                 _buildMenuItem(
                   icon: Icons.notifications_outlined,
                   title: 'Notificaciones',
-                  onTap: () {},
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                _buildMenuItem(
-                  icon: Icons.lock_outlined,
-                  title: 'Privacidad',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
