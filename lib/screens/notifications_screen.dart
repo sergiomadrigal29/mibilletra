@@ -33,11 +33,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await interval.save();
 
     if (interval != NotificationInterval.disabled) {
-      if (interval == NotificationInterval.everyMinute ||
-          interval == NotificationInterval.hourly ||
-          interval == NotificationInterval.every12Hours) {
-        await NotificationService.instance.requestExactAlarmPermission();
-      }
       await NotificationService.instance.requestNotificationPermission();
     }
 

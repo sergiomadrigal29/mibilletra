@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:workmanager/workmanager.dart';
+
+const String _periodicTaskName = 'periodicNotificationTask';
 
 enum NotificationInterval {
   disabled('Desactivado'),
@@ -31,17 +31,27 @@ enum NotificationInterval {
       orElse: () => NotificationInterval.disabled,
     );
   }
+
+  Duration? get duration {
+    return switch (this) {
+      NotificationInterval.everyMinute => const Duration(minutes: 15),
+      NotificationInterval.hourly => const Duration(hours: 1),
+      NotificationInterval.every12Hours => const Duration(hours: 12),
+      NotificationInterval.daily => const Duration(hours: 24),
+      NotificationInterval.weekly => const Duration(days: 7),
+      NotificationInterval.disabled => null,
+    };
+  }
 }
 
 class NotificationService {
   static final NotificationService instance = NotificationService._();
   NotificationService._();
 
-  final FlutterLocalNotificationsPlugin _plugin =
+  static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
-    tz_data.initializeTimeZones();
     const androidSettings = AndroidInitializationSettings('app_icon');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -62,7 +72,7 @@ class NotificationService {
     }
   }
 
-  Future<void> _crearCanalNotificacion() async {
+  static Future<void> _crearCanalNotificacion() async {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (android == null) return;
@@ -83,14 +93,6 @@ class NotificationService {
     }
   }
 
-  Future<bool> _requestExactAlarmPermission() async {
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-    if (android == null) return false;
-    final granted = await android.requestExactAlarmsPermission();
-    return granted == true;
-  }
-
   Future<void> _restaurarProgramacion() async {
     final interval = await NotificationInterval.load();
     if (interval != NotificationInterval.disabled) {
@@ -98,7 +100,11 @@ class NotificationService {
     }
   }
 
-  Future<void> showTestNotification() async {
+  Future<void> showNotification({
+    int id = 0,
+    String? title,
+    String? body,
+  }) async {
     final androidDetails = AndroidNotificationDetails(
       'reminder_channel',
       'Recordatorios',
@@ -112,28 +118,19 @@ class NotificationService {
       iOS: const DarwinNotificationDetails(),
     );
     await _plugin.show(
-      999,
-      'Mi Billetera',
-      'Notificación de prueba - funciona correctamente',
+      id,
+      title ?? 'Mi Billetera',
+      body ?? 'Recuerda ponerte al día con tu billetera',
       details,
     );
   }
 
-  Future<void> _programarConExact(
-    int id,
-    NotificationDetails details,
-    Future<void> Function() programarExact,
-    Future<void> Function() programarInexact,
-  ) async {
-    try {
-      await programarExact();
-    } on PlatformException catch (e) {
-      if (e.code == 'exact_alarms_not_permitted') {
-        await programarInexact();
-      } else {
-        rethrow;
-      }
-    }
+  Future<void> showTestNotification() async {
+    await showNotification(
+      id: 999,
+      title: 'Mi Billetera',
+      body: 'Notificación de prueba - funciona correctamente',
+    );
   }
 
   Future<void> schedule(NotificationInterval interval) async {
@@ -141,138 +138,50 @@ class NotificationService {
 
     if (interval == NotificationInterval.disabled) return;
 
-    const title = 'Mi Billetera';
-    const body = 'Recuerda ponerte al día con tu billetera';
-    final androidDetails = AndroidNotificationDetails(
+    final duration = interval.duration;
+    if (duration == null) return;
+
+    await Workmanager().registerPeriodicTask(
+      _periodicTaskName,
+      _periodicTaskName,
+      frequency: duration,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+      backoffPolicy: BackoffPolicy.linear,
+    );
+  }
+
+  static Future<void> executePeriodicTask() async {
+    const androidSettings = AndroidInitializationSettings('app_icon');
+    const iosSettings = DarwinInitializationSettings();
+    const settings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+    await _plugin.initialize(settings);
+    await _crearCanalNotificacion();
+
+    const androidDetails = AndroidNotificationDetails(
       'reminder_channel',
       'Recordatorios',
       channelDescription: 'Recordatorios para actualizar tu billetera',
       importance: Importance.high,
       priority: Priority.high,
-      largeIcon: const DrawableResourceAndroidBitmap('app_icon'),
     );
-    final details = NotificationDetails(
+    const details = NotificationDetails(
       android: androidDetails,
-      iOS: const DarwinNotificationDetails(),
+      iOS: DarwinNotificationDetails(),
     );
-
-    final now = tz.TZDateTime.now(tz.local);
-
-    switch (interval) {
-      case NotificationInterval.everyMinute:
-        await _programarConExact(
-          0,
-          details,
-          () => _plugin.periodicallyShowWithDuration(
-            0,
-            title,
-            body,
-            const Duration(minutes: 15),
-            details,
-          ),
-          () => _plugin.periodicallyShowWithDuration(
-            0,
-            title,
-            body,
-            const Duration(minutes: 15),
-            details,
-            androidScheduleMode: AndroidScheduleMode.inexact,
-          ),
-        );
-      case NotificationInterval.hourly:
-        await _programarConExact(
-          1,
-          details,
-          () => _plugin.periodicallyShowWithDuration(
-            1,
-            title,
-            body,
-            const Duration(hours: 1),
-            details,
-          ),
-          () => _plugin.periodicallyShowWithDuration(
-            1,
-            title,
-            body,
-            const Duration(hours: 1),
-            details,
-            androidScheduleMode: AndroidScheduleMode.inexact,
-          ),
-        );
-      case NotificationInterval.every12Hours:
-        await _programarConExact(
-          2,
-          details,
-          () => _plugin.periodicallyShowWithDuration(
-            2,
-            title,
-            body,
-            const Duration(hours: 12),
-            details,
-          ),
-          () => _plugin.periodicallyShowWithDuration(
-            2,
-            title,
-            body,
-            const Duration(hours: 12),
-            details,
-            androidScheduleMode: AndroidScheduleMode.inexact,
-          ),
-        );
-      case NotificationInterval.daily:
-        final dailyTime = tz.TZDateTime(
-          tz.local,
-          now.year,
-          now.month,
-          now.day,
-          9,
-          0,
-        );
-        await _plugin.zonedSchedule(
-          3,
-          title,
-          body,
-          dailyTime.isBefore(now)
-              ? dailyTime.add(const Duration(days: 1))
-              : dailyTime,
-          details,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.time,
-        );
-      case NotificationInterval.weekly:
-        final weeklyTime = tz.TZDateTime(
-          tz.local,
-          now.year,
-          now.month,
-          now.day,
-          9,
-          0,
-        );
-        await _plugin.zonedSchedule(
-          4,
-          title,
-          body,
-          weeklyTime.isBefore(now)
-              ? weeklyTime.add(const Duration(days: 7))
-              : weeklyTime,
-          details,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        );
-      case NotificationInterval.disabled:
-        break;
-    }
+    await _plugin.show(
+      0,
+      'Mi Billetera',
+      'Recuerda ponerte al día con tu billetera',
+      details,
+    );
   }
 
-  Future<bool> requestExactAlarmPermission() => _requestExactAlarmPermission();
+  Future<bool> requestExactAlarmPermission() async => true;
 
   Future<void> cancelAll() async {
-    for (int i = 0; i < 10; i++) {
-      await _plugin.cancel(i);
-    }
+    await Workmanager().cancelByUniqueName(_periodicTaskName);
   }
 }
