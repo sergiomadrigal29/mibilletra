@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/design_tokens.dart';
+import '../widgets/state_views.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -45,6 +47,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ? 'Notificaciones desactivadas'
               : 'Notificaciones programadas ${interval.label.toLowerCase()}',
         ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
       ),
     );
   }
@@ -57,53 +63,35 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppSpacing.xl),
               children: [
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryFixed,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, color: AppTheme.secondary),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Recibirás un recordatorio para mantener tu billetera al día.',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.onSecondaryFixed,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                InfoBanner(
+                  icon: Icons.info_outline,
+                  message: 'Recibirás un recordatorio para mantener tu billetera al día.',
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
                 Text(
                   'Frecuencia',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 ...NotificationInterval.values.map((interval) {
                   final selected = _selected == interval;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                     child: InkWell(
                       onTap: () => _seleccionar(interval),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.lg,
                         ),
                         decoration: BoxDecoration(
                           color: selected
                               ? AppTheme.primaryFixed
                               : AppTheme.surfaceContainerLowest,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: selected
                                 ? AppTheme.primary
@@ -121,15 +109,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   ? AppTheme.primary
                                   : AppTheme.onSurfaceVariant,
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: AppSpacing.lg),
                             Text(
                               interval.label,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    fontWeight:
-                                        selected ? FontWeight.w600 : FontWeight.w400,
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                fontWeight:
+                                    selected ? FontWeight.w600 : FontWeight.w400,
                               ),
                             ),
                           ],
@@ -138,7 +123,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   );
                 }),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xxl),
                 OutlinedButton.icon(
                   onPressed: () async {
                     await NotificationService.instance
@@ -148,6 +133,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Notificación de prueba enviada'),
+                          behavior: SnackBarBehavior.floating,
                         ),
                       );
                     }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/categorias_static.dart';
 import '../theme/app_theme.dart';
+import '../theme/design_tokens.dart';
+import '../widgets/state_views.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -41,28 +43,32 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget _buildList(BuildContext context, List<CategoriaData> categorias, bool esIngreso) {
     final grupos = categorias.map((c) => c.grupo).toSet().toList();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.sm,
+        AppSpacing.xl,
+        AppSpacing.xl,
+      ),
       children: grupos.map((grupo) {
         final cats = categorias.where((c) => c.grupo == grupo).toList();
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: Container(
             decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              boxShadow: AppElevation.level1,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.sm + 6,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
                   child: Text(
                     grupo.toUpperCase(),
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -72,25 +78,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   ),
                 ),
                 ...cats.map((cat) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.sm + 2,
+                  ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: esIngreso
-                              ? AppTheme.primaryFixed
-                              : AppTheme.tertiaryFixed,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          cat.icono,
-                          size: 20,
-                          color: esIngreso ? AppTheme.primary : AppTheme.tertiary,
-                        ),
+                      CategoryIcon(
+                        icon: cat.icono,
+                        backgroundColor: esIngreso
+                            ? AppTheme.primaryFixed
+                            : AppTheme.tertiaryFixed,
+                        iconColor: esIngreso ? AppTheme.primary : AppTheme.tertiary,
+                        size: 40,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Text(
                         cat.nombre,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -100,7 +102,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     ],
                   ),
                 )),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
               ],
             ),
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/design_tokens.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String currentName;
@@ -81,7 +82,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _mostrarError(String mensaje) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje)),
+      SnackBar(
+        content: Text(mensaje),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+      ),
     );
   }
 
@@ -91,13 +98,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: AppTheme.background,
       appBar: AppBar(title: const Text('Editar perfil')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text('Nombre', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -106,12 +113,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               textCapitalization: TextCapitalization.words,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               'Nueva contraseña (opcional)',
               style: Theme.of(context).textTheme.labelLarge,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: _passwordController,
               decoration: const InputDecoration(
@@ -120,7 +127,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               obscureText: true,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             TextField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
@@ -129,19 +136,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               obscureText: true,
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _loading ? null : _guardar,
-              child: _loading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text('Guardar cambios'),
+            const SizedBox(height: AppSpacing.xxl),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _loading ? null : _guardar,
+                child: _loading
+                    ? const SizedBox(
+                        width: AppSpacing.xl,
+                        height: AppSpacing.xl,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Guardar cambios'),
+              ),
             ),
           ],
         ),

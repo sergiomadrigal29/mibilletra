@@ -2,16 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
-import '../models/categorias_static.dart';
+import '../theme/design_tokens.dart';
 import 'add_movimiento_screen.dart';
-
-IconData _iconForCategoria(String nombre) {
-  final ingreso = ingresoCategorias.where((c) => c.nombre == nombre).firstOrNull;
-  if (ingreso != null) return ingreso.icono;
-  final gasto = gastoCategorias.where((c) => c.nombre == nombre).firstOrNull;
-  if (gasto != null) return gasto.icono;
-  return Icons.receipt_long_outlined;
-}
+import '../widgets/movement_tile.dart';
+import '../widgets/state_views.dart';
 
 class HistoryTab extends StatefulWidget {
   final VoidCallback? onCambio;
@@ -86,7 +80,7 @@ class HistoryTabState extends State<HistoryTab> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: const Text('Eliminar movimiento'),
         content: Text(
@@ -95,12 +89,12 @@ class HistoryTabState extends State<HistoryTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: const Text(AppSemantics.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppTheme.error),
-            child: const Text('Eliminar'),
+            child: const Text(AppSemantics.delete),
           ),
         ],
       ),
@@ -121,7 +115,7 @@ class HistoryTabState extends State<HistoryTab> {
           content: Text('Error: ${e.toString()}'),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),
       );
@@ -134,10 +128,15 @@ class HistoryTabState extends State<HistoryTab> {
       context: context,
       backgroundColor: AppTheme.background,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.md,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -149,7 +148,7 @@ class HistoryTabState extends State<HistoryTab> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             _buildOpcion(
               icon: Icons.edit_outlined,
               texto: 'Editar',
@@ -171,7 +170,7 @@ class HistoryTabState extends State<HistoryTab> {
                 }
               },
             ),
-            const Divider(height: 1, indent: 16, endIndent: 16),
+            const Divider(height: 1, indent: AppSpacing.lg, endIndent: AppSpacing.lg),
             _buildOpcion(
               icon: Icons.delete_outlined,
               texto: 'Eliminar',
@@ -195,9 +194,9 @@ class HistoryTabState extends State<HistoryTab> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm + 2),
         child: Row(
           children: [
             Container(
@@ -209,7 +208,7 @@ class HistoryTabState extends State<HistoryTab> {
               ),
               child: Icon(icon, color: color, size: 22),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppSpacing.sm + 2),
             Text(
               texto,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -229,79 +228,36 @@ class HistoryTabState extends State<HistoryTab> {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Historial'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search_outlined),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: AppTheme.error),
-              const SizedBox(height: 16),
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _cargarMovimientos,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    if (_loading) return const LoadingView();
+    if (_error != null) return ErrorView(message: _error!, onRetry: _cargarMovimientos);
 
     if (_movimientos.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 64,
-              color: AppTheme.onSurfaceVariant.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No hay movimientos registrados',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppTheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+      return EmptyView(
+        icon: Icons.receipt_long_outlined,
+        message: 'No hay movimientos registrados',
       );
     }
 
     return RefreshIndicator(
       onRefresh: _cargarMovimientos,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
         itemCount: _movimientos.length + 1,
         itemBuilder: (context, index) {
           if (index == _movimientos.length) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
               child: Center(
                 child: Text(
                   'Fin del historial',
@@ -326,7 +282,7 @@ class HistoryTabState extends State<HistoryTab> {
             children: [
               if (showHeader && mes.isNotEmpty) ...[
                 Padding(
-                  padding: const EdgeInsets.only(left: 4, top: 16, bottom: 8),
+                  padding: const EdgeInsets.only(left: AppSpacing.xs, top: AppSpacing.lg, bottom: AppSpacing.sm),
                   child: Text(
                     mes.toUpperCase(),
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -336,101 +292,13 @@ class HistoryTabState extends State<HistoryTab> {
                   ),
                 ),
               ],
-              _buildMovementTile(m),
+              MovementTile(
+                movimiento: m,
+                onTap: () => _mostrarOpciones(m),
+              ),
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildMovementTile(Map<String, dynamic> m) {
-    final monto = ((m['monto'] as num?) ?? 0).toDouble();
-    final idTipo = (m['id_tipo'] as int?) ?? 1;
-    final esIngreso = idTipo == 1;
-    final catNombre =
-        (m['categoria'] as Map<String, dynamic>?)?['nombre'] as String? ??
-            'General';
-    final descripcion = m['descripcion'] as String?;
-    final fecha = DateTime.tryParse(m['fecha']?.toString() ?? '');
-
-    return GestureDetector(
-      onTap: () => _mostrarOpciones(m),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: esIngreso
-                      ? AppTheme.primaryFixed
-                      : AppTheme.tertiaryFixed,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _iconForCategoria(catNombre),
-                  color: esIngreso ? AppTheme.primary : AppTheme.tertiary,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      descripcion ?? catNombre,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      catNombre,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${esIngreso ? '+' : '-'}C\$${NumberFormat('#,##0.00').format(monto)}',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: esIngreso ? AppTheme.primary : AppTheme.error,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (fecha != null)
-                    Text(
-                      DateFormat('d MMM yyyy').format(fecha),
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppTheme.onSurfaceVariant,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

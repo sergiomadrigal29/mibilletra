@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/design_tokens.dart';
 import 'login_screen.dart';
 import 'categories_screen.dart';
 import 'edit_profile_screen.dart';
 import 'notifications_screen.dart';
+import '../widgets/app_card.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -73,14 +75,14 @@ class ProfileTabState extends State<ProfileTab> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: const Text('Cerrar sesión'),
         content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: const Text(AppSemantics.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -106,43 +108,32 @@ class ProfileTabState extends State<ProfileTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('Perfil'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Perfil')),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
+    if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: AppTheme.error),
-              const SizedBox(height: 16),
+              const Icon(Icons.error_outline, size: AppIconSize.display, color: AppTheme.error),
+              const SizedBox(height: AppSpacing.lg),
               Text(
                 _error!,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               ElevatedButton.icon(
                 onPressed: _cargarPerfil,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
+                label: const Text(AppSemantics.retry),
               ),
             ],
           ),
@@ -151,10 +142,10 @@ class ProfileTabState extends State<ProfileTab> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.xl),
       child: Column(
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           Stack(
             children: [
               Container(
@@ -178,51 +169,40 @@ class ProfileTabState extends State<ProfileTab> {
                 bottom: 0,
                 right: 0,
                 child: Container(
-                  width: 32,
-                  height: 32,
+                  width: AppSpacing.xxl,
+                  height: AppSpacing.xxl,
                   decoration: BoxDecoration(
                     color: AppTheme.secondaryContainer,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: AppTheme.surfaceContainerLowest,
-                      width: 2,
+                      width: AppBorder.thin.width,
                     ),
                   ),
                   child: const Icon(
                     Icons.edit,
-                    size: 16,
+                    size: AppIconSize.lg - 8,
                     color: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             _nombre,
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             _email,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppTheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+          const SizedBox(height: AppSpacing.xxl),
+          AppCard(
+            padding: const EdgeInsets.all(AppSpacing.sm),
             child: Column(
               children: [
                 _buildMenuItem(
@@ -242,7 +222,7 @@ class ProfileTabState extends State<ProfileTab> {
                     }
                   },
                 ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
+                const Divider(height: 1, indent: AppSpacing.lg, endIndent: AppSpacing.lg),
                 _buildMenuItem(
                   icon: Icons.category_outlined,
                   title: 'Lista de categorías',
@@ -255,7 +235,7 @@ class ProfileTabState extends State<ProfileTab> {
                     );
                   },
                 ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
+                const Divider(height: 1, indent: AppSpacing.lg, endIndent: AppSpacing.lg),
                 _buildMenuItem(
                   icon: Icons.notifications_outlined,
                   title: 'Notificaciones',
@@ -271,7 +251,7 @@ class ProfileTabState extends State<ProfileTab> {
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: AppSpacing.xxl),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -296,9 +276,12 @@ class ProfileTabState extends State<ProfileTab> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.lg,
+        ),
         child: Row(
           children: [
             Container(
@@ -308,9 +291,9 @@ class ProfileTabState extends State<ProfileTab> {
                 color: AppTheme.secondaryFixed,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 20, color: AppTheme.secondary),
+              child: Icon(icon, size: AppSpacing.xl - 4, color: AppTheme.secondary),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Text(
                 title,

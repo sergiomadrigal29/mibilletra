@@ -3,6 +3,8 @@ import '../services/supabase_service.dart';
 import '../models/movimiento.dart';
 import '../models/categorias_static.dart';
 import '../theme/app_theme.dart';
+import '../theme/design_tokens.dart';
+import '../widgets/state_views.dart';
 
 class AddMovimientoScreen extends StatefulWidget {
   final int idTipo;
@@ -105,7 +107,7 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
           content: Text('Error: ${e.toString()}'),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),
       );
@@ -120,7 +122,7 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
       isScrollControlled: true,
       backgroundColor: AppTheme.background,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (ctx) {
         final grupos = getGruposByTipo(widget.idTipo);
@@ -131,7 +133,12 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
           expand: false,
           builder: (ctx, scrollController) {
             return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.md,
+                AppSpacing.xl,
+                AppSpacing.xl,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -145,12 +152,12 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   Text(
                     widget.idTipo == 1 ? 'Categoría de ingreso' : 'Categoría de gasto',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   Expanded(
                     child: ListView(
                       controller: scrollController,
@@ -171,24 +178,23 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
 
   Widget _buildGrupoCategoria(BuildContext ctx, String grupo, List<CategoriaData> cats) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppElevation.level1,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm + 6,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
               child: Text(
                 grupo.toUpperCase(),
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -202,29 +208,24 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                 setState(() => _categoriaSeleccionada = cat);
                 Navigator.pop(ctx);
               },
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: widget.idTipo == 1
-                            ? AppTheme.primaryFixed
-                            : AppTheme.tertiaryFixed,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        cat.icono,
-                        size: 22,
-                        color: widget.idTipo == 1
-                            ? AppTheme.primary
-                            : AppTheme.tertiary,
-                      ),
+                    CategoryIcon(
+                      icon: cat.icono,
+                      backgroundColor: widget.idTipo == 1
+                          ? AppTheme.primaryFixed
+                          : AppTheme.tertiaryFixed,
+                      iconColor: widget.idTipo == 1
+                          ? AppTheme.primary
+                          : AppTheme.tertiary,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.md),
                     Text(
                       cat.nombre,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -235,7 +236,7 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                 ),
               ),
             )),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
           ],
         ),
       ),
@@ -259,7 +260,7 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                 : 'Registrar gasto'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Form(
           key: _formKey,
           child: Column(
@@ -277,77 +278,81 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                   ),
                   child: Icon(
                     esIngreso ? Icons.arrow_downward : Icons.arrow_upward,
-                    size: 40,
+                    size: AppIconSize.xxxl,
                     color: esIngreso ? AppTheme.primary : AppTheme.error,
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xxl),
               Text(
                 'Monto',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: AppTheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _montoController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+              const SizedBox(height: AppSpacing.sm),
+              SizedBox(
+                width: double.infinity,
+                child: TextFormField(
+                  controller: _montoController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primary,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'C\$ 0.00',
+                    border: InputBorder.none,
+                    filled: false,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Ingresa el monto';
+                    final monto = double.tryParse(v);
+                    if (monto == null || monto <= 0) return 'Monto inválido';
+                    return null;
+                  },
                 ),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  color: AppTheme.primary,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'C\$ 0.00',
-                  border: InputBorder.none,
-                  filled: false,
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Ingresa el monto';
-                  final monto = double.tryParse(v);
-                  if (monto == null || monto <= 0) return 'Monto inválido';
-                  return null;
-                },
               ),
-              const SizedBox(height: 32),
+              const Divider(height: 1, thickness: 1, color: AppTheme.outlineVariant),
+              const SizedBox(height: AppSpacing.xxl),
               Text(
                 'Categoría',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: AppTheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               GestureDetector(
                 onTap: _seleccionarCategoria,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.sm + 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: Border.all(color: AppTheme.outlineVariant),
                   ),
                   child: Row(
                     children: [
                       if (_categoriaSeleccionada != null) ...[
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: esIngreso
-                                ? AppTheme.primaryFixed
-                                : AppTheme.tertiaryFixed,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _categoriaSeleccionada!.icono,
-                            size: 18,
-                            color: esIngreso ? AppTheme.primary : AppTheme.tertiary,
-                          ),
+                        CategoryIcon(
+                          icon: _categoriaSeleccionada!.icono,
+                          backgroundColor: esIngreso
+                              ? AppTheme.primaryFixed
+                              : AppTheme.tertiaryFixed,
+                          iconColor: esIngreso ? AppTheme.primary : AppTheme.tertiary,
+                          size: 36,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Text(
                             _categoriaSeleccionada!.nombre,
@@ -361,7 +366,7 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                           Icons.category_outlined,
                           color: AppTheme.onSurfaceVariant,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Text(
                             'Seleccionar categoría',
@@ -379,35 +384,39 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xxl),
               Text(
                 'Descripción (opcional)',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: AppTheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _descripcionController,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Agrega una descripción...',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     borderSide: const BorderSide(color: AppTheme.outlineVariant),
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: AppSpacing.xxl + 8),
               ElevatedButton(
                 onPressed: _loading ? null : _guardar,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: esIngreso ? AppTheme.primary : AppTheme.error,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
                 ),
                 child: _loading
                     ? const SizedBox(
-                        height: 24,
-                        width: 24,
+                        height: AppSpacing.xl,
+                        width: AppSpacing.xl,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: Colors.white,
@@ -416,8 +425,8 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.check, size: 20),
-                          const SizedBox(width: 8),
+                          const Icon(Icons.check, size: AppSpacing.xl - 4),
+                          const SizedBox(width: AppSpacing.sm),
                           Text(_esEdicion
                               ? 'Actualizar'
                               : esIngreso
