@@ -36,17 +36,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (interval == NotificationInterval.everyMinute ||
           interval == NotificationInterval.hourly ||
           interval == NotificationInterval.every12Hours) {
-        final granted =
-            await NotificationService.instance.requestExactAlarmPermission();
-        if (!granted && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Concede permiso de alarmas exactas en Ajustes > Apps > MiBilletera > Alarmas exactas para mayor precisión',
-              ),
-            ),
-          );
-        }
+        await NotificationService.instance.requestExactAlarmPermission();
       }
       await NotificationService.instance.requestNotificationPermission();
     }

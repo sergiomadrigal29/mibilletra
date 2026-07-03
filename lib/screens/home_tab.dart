@@ -305,7 +305,7 @@ class HomeTabState extends State<HomeTab> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$${NumberFormat('#,##0.00').format(saldo)}',
+                'C\$${NumberFormat('#,##0.00').format(saldo)}',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   color: saldo >= 0 ? AppTheme.primary : AppTheme.error,
                   height: 1,
@@ -390,7 +390,7 @@ class HomeTabState extends State<HomeTab> {
           ),
           const SizedBox(height: 12),
           Text(
-            '\$${NumberFormat('#,##0.00').format(monto)}',
+            'C\$${NumberFormat('#,##0.00').format(monto)}',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: color,
               fontWeight: FontWeight.w600,
@@ -598,7 +598,7 @@ class HomeTabState extends State<HomeTab> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${esIngreso ? '+' : '-'}\$${NumberFormat('#,##0.00').format(monto)}',
+                '${esIngreso ? '+' : '-'}C\$${NumberFormat('#,##0.00').format(monto)}',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: esIngreso ? AppTheme.primary : AppTheme.error,
                   fontWeight: FontWeight.w600,

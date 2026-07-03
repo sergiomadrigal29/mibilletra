@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,7 +7,7 @@ import 'package:timezone/data/latest.dart' as tz_data;
 
 enum NotificationInterval {
   disabled('Desactivado'),
-  everyMinute('Cada minuto'),
+  everyMinute('Cada 15 minuto'),
   hourly('Cada hora'),
   every12Hours('Cada 12 horas'),
   daily('Cada día'),
@@ -54,7 +55,11 @@ class NotificationService {
     await _plugin.initialize(settings);
     await _crearCanalNotificacion();
     await requestNotificationPermission();
-    await _restaurarProgramacion();
+    try {
+      await _restaurarProgramacion();
+    } catch (e) {
+      debugPrint('Error restoring notification schedule: $e');
+    }
   }
 
   Future<void> _crearCanalNotificacion() async {
@@ -87,12 +92,10 @@ class NotificationService {
   }
 
   Future<void> _restaurarProgramacion() async {
-    try {
-      final interval = await NotificationInterval.load();
-      if (interval != NotificationInterval.disabled) {
-        await schedule(interval);
-      }
-    } catch (_) {}
+    final interval = await NotificationInterval.load();
+    if (interval != NotificationInterval.disabled) {
+      await schedule(interval);
+    }
   }
 
   Future<void> showTestNotification() async {
@@ -118,8 +121,6 @@ class NotificationService {
 
   Future<void> _programarConExact(
     int id,
-    String title,
-    String body,
     NotificationDetails details,
     Future<void> Function() programarExact,
     Future<void> Function() programarInexact,
@@ -161,54 +162,46 @@ class NotificationService {
       case NotificationInterval.everyMinute:
         await _programarConExact(
           0,
-          title,
-          body,
           details,
-          () => _plugin.periodicallyShow(
+          () => _plugin.periodicallyShowWithDuration(
             0,
             title,
             body,
-            RepeatInterval.everyMinute,
+            const Duration(minutes: 15),
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           ),
-          () => _plugin.periodicallyShow(
+          () => _plugin.periodicallyShowWithDuration(
             0,
             title,
             body,
-            RepeatInterval.everyMinute,
+            const Duration(minutes: 15),
             details,
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.inexact,
           ),
         );
       case NotificationInterval.hourly:
         await _programarConExact(
           1,
-          title,
-          body,
           details,
-          () => _plugin.periodicallyShow(
+          () => _plugin.periodicallyShowWithDuration(
             1,
             title,
             body,
-            RepeatInterval.hourly,
+            const Duration(hours: 1),
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           ),
-          () => _plugin.periodicallyShow(
+          () => _plugin.periodicallyShowWithDuration(
             1,
             title,
             body,
-            RepeatInterval.hourly,
+            const Duration(hours: 1),
             details,
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.inexact,
           ),
         );
       case NotificationInterval.every12Hours:
         await _programarConExact(
           2,
-          title,
-          body,
           details,
           () => _plugin.periodicallyShowWithDuration(
             2,
@@ -216,7 +209,6 @@ class NotificationService {
             body,
             const Duration(hours: 12),
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           ),
           () => _plugin.periodicallyShowWithDuration(
             2,
@@ -224,7 +216,7 @@ class NotificationService {
             body,
             const Duration(hours: 12),
             details,
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.inexact,
           ),
         );
       case NotificationInterval.daily:

@@ -300,7 +300,7 @@ class _AddMovimientoScreenState extends State<AddMovimientoScreen> {
                   color: AppTheme.primary,
                 ),
                 decoration: const InputDecoration(
-                  hintText: '\$ 0.00',
+                  hintText: 'C\$ 0.00',
                   border: InputBorder.none,
                   filled: false,
                 ),

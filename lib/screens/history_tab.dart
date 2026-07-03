@@ -413,7 +413,7 @@ class HistoryTabState extends State<HistoryTab> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${esIngreso ? '+' : '-'}\$${NumberFormat('#,##0.00').format(monto)}',
+                    '${esIngreso ? '+' : '-'}C\$${NumberFormat('#,##0.00').format(monto)}',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: esIngreso ? AppTheme.primary : AppTheme.error,
                       fontWeight: FontWeight.w600,
